@@ -1,7 +1,7 @@
 # Author: Alex Wimbush, University of Liverpool 2022
 from pba import Interval
-from ClopperPearson import ClopperPearson
-import DiagnosticUtilFunctions as df
+from TwoTestCharacteristics.ClopperPearson import ClopperPearson
+import TwoTestCharacteristics.DiagnosticUtilFunctions as df
 import matplotlib.pyplot as plt
 from scipy.stats import bernoulli
 import numpy as np
@@ -39,7 +39,8 @@ class Test():
     # Take a set of results and calculate the structure for a positive result, which can be used for inference.
     def Set_Results(self, Results):
         # Set a Positive structure based on the observed Results.
-        self.Positive = ClopperPearson(sum(self.Results), len(self.Results))
+        self.Results = Results
+        self.Positive = ClopperPearson(sum(Results), len(Results))
         # Set a Prevalence structure based on the observed results and the provided information about sens and spec.
         self.Prev_plaus = lambda p: self.positive.Possibility(
             df.PosProb(self.Sens, self.Spec, p)

@@ -1,7 +1,6 @@
 from pba import Interval
 from scipy.stats import beta
 import numpy as np
-import DiagnosticUtilFunctions as df
 import matplotlib.pyplot as plt
 
 # Bit of code to implement Clopper-Pearson cboxes in a way that can be easily converetd into a possibility structure.

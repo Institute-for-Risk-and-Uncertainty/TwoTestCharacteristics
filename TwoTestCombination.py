@@ -1,9 +1,9 @@
 # Author: Alex Wimbush, University of Liverpool 2022
-import DiagnosticUtilFunctions as df
+import TwoTestCharacteristics.DiagnosticUtilFunctions as df
 import numpy as np
 from pba import Interval
 import matplotlib.pyplot as plt
-from ClopperPearson import ClopperPearson
+from TwoTestCharacteristics.ClopperPearson import ClopperPearson
 
 # Class to infer sensitivity and specificity from two sets of test results. Broadly this is set up to infer the characteristics of the first test, but the structures can be used to develop a six-dimensional possibility structure covering test characteristics, prevalence and correlation if necessary. 
 class Combine_Results():
@@ -97,6 +97,18 @@ class Combine_Results():
             plaus = self._Point_Possibility(
                 Sens_1, Spec_1, Sens_2, Spec_2, Prev, Corr
                 )
+        elif len(Options) == 1:
+            Funcs = [
+                    lambda x: df.PosProb(x[0], x[1], x[4]),
+                    lambda x: 1 - df.PosProb(x[2], x[3], x[4]),
+                    lambda x: df.ResultProb([1,1], *x),
+                    lambda x: df.ResultProb([1,0], *x),
+                    lambda x: df.ResultProb([0,1], *x),
+                    lambda x: df.ResultProb([0,0], *x)
+                ]
+            plaus = self.Structures[Options[0]].Possibility(Funcs[Options[0]](
+                [Sens_1, Spec_1, Sens_2, Spec_2, Prev, Corr]
+            ))
         else:
             # Figure out how many binary splits are required to achieve desired level of precision.
             divisions = int(np.log(precision)/np.log(0.5))+1

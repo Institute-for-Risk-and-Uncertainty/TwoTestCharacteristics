@@ -4,6 +4,7 @@ from pba import Interval
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from scipy.spatial import ConvexHull
+from scipy.stats.qmc import LatinHypercube
 from itertools import product, combinations
 from scipy.optimize import minimize
 rc('font',**{'family':'serif'})
@@ -149,14 +150,14 @@ def Bounding_Cube(
                 PassArgs = PassArgs[0:i]+[Low]+PassArgs[i+1:]
                 while not Membership_Func(*PassArgs, **kwargs):
                     Low += Low.width()
-                    if Low.left >= 1:
+                    if Low.right > A[-1].right:
                         return None
                     PassArgs = PassArgs[0:i]+[Low]+PassArgs[i+1:]
                 High = Temp[-1]
                 PassArgs = PassArgs[0:i]+[High]+PassArgs[i+1:]
                 while not Membership_Func(*PassArgs, **kwargs):
                     High -= High.width()
-                    if High.right <= 0:
+                    if High.left < A[0].left:
                         return None
                     PassArgs = PassArgs[0:i]+[High]+PassArgs[i+1:]
                 outargs[i] = [Low, High]
@@ -207,25 +208,6 @@ def PopPointCorr(
         a = a_pos + a_neg
         Corr = (a - (1-p)*(1-q))/(p*q*(1-p)*(1-q))**0.5
     return max(min(Corr, 1), -1)
-
-def SubIntervalRecon(func, splits = 5, *args, **kwargs):
-    Ints = [isinstance(I, Interval) for I in args]
-    PSplits = [
-        IntervalSplit(I, 2) 
-        if isinstance(I, Interval) 
-        else I 
-        for I in args
-        ]
-    funcmax = func(*[
-        I.left 
-        if isinstance(I, Interval) 
-        else I 
-        for I in args
-        ])
-    for s in range(splits):
-        for i, I in Ints:
-            if I:
-                Tsplit = [PSplits[i].left]
 
 
 
@@ -647,69 +629,69 @@ def Full_Vertices(Sens, Spec, Sens2, Spec2, Prev, Corr, Options):
             ]
         if not Corr is None:
             TempCorr = Corrcheckfun(*Temp, Corr)
-            if not TempCorr is None:
-                if isinstance(TempCorr, Interval):
-                    VPoint+=[[*Temp, TempCorr.left]]
-                    VPoint+=[[*Temp, TempCorr.right]]
-                else:
-                    VPoint+=[[*Temp, TempCorr]]
-            else:
-                iterc = c.__iter__()
-                for i, I in enumerate(Inputs):
-                    if Ints[i]:
-                        if isinstance(Corr, Interval):
-                            FindTempL = Bounding_Cube(
-                                CorrMemberFun, 
-                                *Temp[:i] + [I] + Temp[i+1:] + [Corr.left]
-                                )
-                            FindTempR = Bounding_Cube(
-                                CorrMemberFun, 
-                                *Temp[:i] + [I] + Temp[i+1:] + [Corr.right]
-                                )
-                            if iterc.__next__():
-                                if not FindTempL is None:
-                                    VPoint += [
-                                        FindTempL[:i] + 
-                                        [FindTempL[i].right] + 
-                                        FindTempL[i+1:]
-                                        ]
-                                if not FindTempR is None:
-                                    VPoint += [
-                                        FindTempR[:i] + 
-                                        [FindTempR[i].right] + 
-                                        FindTempR[i+1:]
-                                        ]
-                            else:
-                                if not FindTempL is None:
-                                    VPoint += [
-                                        FindTempL[:i] + 
-                                        [FindTempL[i].left] + 
-                                        FindTempL[i+1:]
-                                        ]
-                                if not FindTempR is None:
-                                    VPoint += [
-                                        FindTempR[:i] + 
-                                        [FindTempR[i].left] + 
-                                        FindTempR[i+1:]
-                                        ]
+            # if not TempCorr is None:
+            #     if isinstance(TempCorr, Interval):
+            #         VPoint+=[[*Temp, TempCorr.left]]
+            #         VPoint+=[[*Temp, TempCorr.right]]
+            #     else:
+            #         VPoint+=[[*Temp, TempCorr]]
+            # else:
+            iterc = c.__iter__()
+            for i, I in enumerate(Inputs):
+                if Ints[i]:
+                    if isinstance(Corr, Interval):
+                        FindTempL = Bounding_Cube(
+                            CorrMemberFun, 
+                            *Temp[:i] + [I] + Temp[i+1:] + [Corr.left]
+                            )
+                        FindTempR = Bounding_Cube(
+                            CorrMemberFun, 
+                            *Temp[:i] + [I] + Temp[i+1:] + [Corr.right]
+                            )
+                        if iterc.__next__():
+                            if not FindTempL is None:
+                                VPoint += [
+                                    FindTempL[:i] + 
+                                    [FindTempL[i].right] + 
+                                    FindTempL[i+1:]
+                                    ]
+                            if not FindTempR is None:
+                                VPoint += [
+                                    FindTempR[:i] + 
+                                    [FindTempR[i].right] + 
+                                    FindTempR[i+1:]
+                                    ]
                         else:
-                            FindTemp = Bounding_Cube(
-                                CorrMemberFun, 
-                                *Temp[:i] + [I] + Temp[i+1:] + [Corr]
-                                )
-                            if not FindTemp is None:
-                                if iterc.__next__():
-                                    VPoint += [
-                                        FindTemp[:i] + 
-                                        [FindTemp[i].right] + 
-                                        FindTemp[i+1:]
-                                        ]
-                                else:
-                                    VPoint += [
-                                        FindTemp[:i] + 
-                                        [FindTemp[i].left] + 
-                                        FindTemp[i+1:]
-                                        ]
+                            if not FindTempL is None:
+                                VPoint += [
+                                    FindTempL[:i] + 
+                                    [FindTempL[i].left] + 
+                                    FindTempL[i+1:]
+                                    ]
+                            if not FindTempR is None:
+                                VPoint += [
+                                    FindTempR[:i] + 
+                                    [FindTempR[i].left] + 
+                                    FindTempR[i+1:]
+                                    ]
+                    else:
+                        FindTemp = Bounding_Cube(
+                            CorrMemberFun, 
+                            *Temp[:i] + [I] + Temp[i+1:] + [Corr]
+                            )
+                        if not FindTemp is None:
+                            if iterc.__next__():
+                                VPoint += [
+                                    FindTemp[:i] + 
+                                    [FindTemp[i].right] + 
+                                    FindTemp[i+1:]
+                                    ]
+                            else:
+                                VPoint += [
+                                    FindTemp[:i] + 
+                                    [FindTemp[i].left] + 
+                                    FindTemp[i+1:]
+                                    ]
         else:
             VPoint+=[Temp]
     Vertices = np.zeros((len(VPoint), len(Options)))
@@ -740,7 +722,8 @@ def MonteCarloSamples(
     Prev = Interval(0,1), 
     Corr = None,
     Options = [2,3],
-    n_Samples = 10000
+    n_Samples = 10000,
+    LHS = False
     ):
     Samples = np.zeros((len(Options), n_Samples))
     Ints = [
@@ -770,10 +753,16 @@ def MonteCarloSamples(
         lambda x: ResultProb([0,1], *x),
         lambda x: ResultProb([0,0], *x)
     ]
-    for i in range(n_Samples):
-        points = np.random.rand(sum(Ints)).__iter__()
+    
+    if LHS:
+        sampler = LatinHypercube(sum(Ints))
+        points = sampler.random(n_Samples).__iter__()
+    else:
+        points = np.random.rand(n_Samples, sum(Ints))
+    for i, point in enumerate(points):
+        point = point.__iter__()
         S1, T1, S2, T2, P = [
-            (points.__next__()*I.width())+I.left
+            (point.__next__()*I.width())+I.left
             if Ints[i]
             else I
             for i, I in enumerate([
@@ -788,7 +777,7 @@ def MonteCarloSamples(
             for j, O in enumerate(Options):
                 Samples[j,i] = NoCorrFuncs[O]([S1, T1, S2, T2, P])
         else:
-            CB = CorrBounds(PosProb(S1, T1, P), PosProb(S2, T2, P)).intersection(Corr)
+            CB = Corrcheckfun(S1, T1, S2, T2, P, Corr)
             while CB is None:
                 points = np.random.rand(sum(Ints)).__iter__()
                 S1, T1, S2, T2, P = [
@@ -803,8 +792,8 @@ def MonteCarloSamples(
                         Prev
                         ]
                     )]
-                CB = CorrBounds(PosProb(S1, T1, P), PosProb(S2, T2, P)).intersection(Corr)
-            C = points.__next__()*CB.width()+CB.left
+                CB = Corrcheckfun(S1, T1, S2, T2, P, Corr)
+            C = point.__next__()*CB.width()+CB.left
             for j, O in enumerate(Options):
                 Samples[j,i] = CorrFuncs[O]([S1, T1, S2, T2, P, C])
     return Samples

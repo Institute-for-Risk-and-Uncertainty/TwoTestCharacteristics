@@ -71,7 +71,7 @@ class Combine_Results():
                 ]
             # Use the calculated mareginal probabilities to determine the marginal possibilities, and then combine these through the specified method.
             plaus = df.plaus_combine(
-                *[self.Structures[o].Possibility(Funcs[o](*Inputs)) 
+                *[self.Structures[o].Possibility(Funcs[o]([*Inputs])) 
                 for o in Options], 
                 method = self.method
                 )
